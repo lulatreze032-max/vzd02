@@ -203,13 +203,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     uid = update.effective_user.id
 
+    # cancela abandono anterior
     task = abandoned_tasks.pop(uid, None)
     if task:
         task.cancel()
-
-    abandoned_tasks[uid] = asyncio.create_task(
-        abandoned_flow(context, update.effective_chat.id)
-    )
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(PLANS["mensal"]["label"], callback_data="buy_mensal")],
@@ -218,10 +215,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [PREVIEW_BUTTON],
     ])
 
-    await update.message.reply_video(START_VIDEO_URL_1)
-    await update.message.reply_video(START_VIDEO_URL_2)
-    #await update.message.reply_audio(START_AUDIO_URL)
+    # 🔒 START VISUAL (protegido)
+    try:
+        await update.message.reply_video(video=START_VIDEO_URL_1)
+        await update.message.reply_video(video=START_VIDEO_URL_2)
+    except Exception as e:
+        logger.error(f"Erro ao enviar vídeos do start: {e}")
 
+    # texto SEMPRE aparece
     await update.message.reply_text(MAIN_TEXT, reply_markup=keyboard)
 
     counter_msg = await update.message.reply_text(
@@ -229,7 +230,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-    asyncio.create_task(counter_task(context, counter_msg.chat_id, counter_msg.message_id))
+    asyncio.create_task(
+        counter_task(context, counter_msg.chat_id, counter_msg.message_id)
+    )
+
+    # ⏰ SÓ AGORA agenda abandono
+    abandoned_tasks[uid] = asyncio.create_task(
+        abandoned_flow(context, update.effective_chat.id)
+    )
 
 # ================= CONTADOR =================
 async def counter_task(context, chat_id, message_id):
