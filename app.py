@@ -366,7 +366,9 @@ async def mp_webhook(request: Request):
 def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # handlers aqui...
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     application.run_polling()
 
