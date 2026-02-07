@@ -220,7 +220,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_video(START_VIDEO_URL_1)
     await update.message.reply_video(START_VIDEO_URL_2)
-    await update.message.reply_audio(START_AUDIO_URL)
+    #await update.message.reply_audio(START_AUDIO_URL)
 
     await update.message.reply_text(MAIN_TEXT, reply_markup=keyboard)
 
