@@ -276,8 +276,9 @@ async def process_payment(update, context, plan_key):
     await msg.reply_text(
         f"💰 {plan['label']}\n\n"
         f"🪙 PIX Copia e Cola:\n"
-        f"{qr}\n\n"
+        f"<code>{qr}</code>\n\n"
         "✅ Após realizar o pagamento, clique no botão abaixo 👇",
+        parse_mode="HTML",
         reply_markup=keyboard
     )
 
