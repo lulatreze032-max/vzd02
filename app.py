@@ -263,6 +263,7 @@ async def process_payment(update, context, plan_key):
     user_id = update.effective_user.id
     msg = update.callback_query.message
 
+    # 1️⃣ Vídeo antes do pagamento
     await msg.reply_video(PRE_PAYMENT_VIDEO_URL)
     await asyncio.sleep(1)
 
@@ -275,16 +276,19 @@ async def process_payment(update, context, plan_key):
 
     loop = asyncio.get_running_loop()
 
-result = await loop.run_in_executor(
-    None,
-    lambda: mp.payment().create(data)
-)
+    # 2️⃣ Gera o pagamento (SEM travar o bot)
+    result = await loop.run_in_executor(
+        None,
+        lambda: mp.payment().create(data)
+    )
 
-response = result.get("response")
-if not response or "id" not in response:
-    logger.error(f"MercadoPago falhou: {result}")
-    await msg.reply_text("❌ Erro ao gerar o PIX. Tente novamente.")
-    return
+    response = result.get("response")
+    if not response or "id" not in response:
+        logger.error(f"MercadoPago falhou: {result}")
+        await msg.reply_text("❌ Erro ao gerar o PIX. Tente novamente.")
+        return
+
+    payment_id = response["id"]
 
     qr = response.get("point_of_interaction", {}).get("transaction_data", {}).get("qr_code")
     qr_b64 = response.get("point_of_interaction", {}).get("transaction_data", {}).get("qr_code_base64")
@@ -296,12 +300,14 @@ if not response or "id" not in response:
         [InlineKeyboardButton("🔄 Já paguei", callback_data="check_payment")]
     ])
 
+    # 3️⃣ Envia PIX copia e cola
     await msg.reply_text(
         f"💰 *{plan['label']}*\n\n🪙 *PIX Copia e Cola:*\n`{qr}`",
         parse_mode="Markdown",
         reply_markup=keyboard
     )
 
+    # 4️⃣ Envia QR Code (se existir)
     if qr_b64:
         img = io.BytesIO(base64.b64decode(qr_b64))
         await msg.reply_photo(img)
