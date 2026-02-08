@@ -75,46 +75,7 @@ def save_payment(payment_id, user_id, plan, amount, status="pending"):
     conn.close()
 
 # ================= TEXTOS =================
-MAIN_TEXT = """🔥Vazados BR ofc.🇧🇷
-
-🔥 Todo o conteúdo reunido em um único lugar, sem limites!
-
-🔐 Ao entrar, você libera: ⤵️
-
-🔞 𝙎𝙚𝙥𝙖𝙧𝙖𝙙𝙤𝙨 𝙥𝙤𝙧 𝙘𝙖𝙩𝙚𝙜𝙤𝙧𝙞𝙖:
-🗂 𝙊𝙧𝙜𝙖𝙣𝙞𝙯𝙖𝙘̧𝙖̃𝙤 𝙙𝙚 𝙖-𝙯!
-🔥amadores 
-🔥desenhos animados +18
-🔥lésbicas 
-🔥Hentai 
-🔥novinhas com animais
-🔥Anal
-🔥Anime
-🔥Trans
-🔥Cosplay
-🔥Milf
-🔥Boquete babado
-🔥Verdade ou desafio
-🔥 МILFѕСâmеrаѕ 
-🔥IΝс3ѕtо Ѕесrе3t0rеаl
-🔥 Novinhas
-🔥 Cornos 
-🔥 Virgens
-🔥 Lésbicas
-🔥Gordinhas
-🔥 Vazadas
-🔥 Flagras e Câmeras Escondidas
-🔥 Orgias & GangBang
-🔥 Coroas
-🔥 Famosas
-🔥tufos filmes animados
-🔥 CLOSE FRIENDS
-🔥 MAIS GOSTOSAS DA NET
-🔥 BRAZZERS
-🔥 XVÍDEOS RED
-🔥 FAMÍLIA SACANA
-🔥 é muito mais
-🔥 Chat ao vivo com novinhas
+MAIN_TEXT = """
 
 🚀 Liberado na hora
 🛠️ Suporte 24h
@@ -277,19 +238,15 @@ async def process_payment(update, context, plan_key):
         "payer": {"email": f"user{user_id}@mail.com"},
     }
 
-    loop = asyncio.get_running_loop()
+    result = mp.payment().create(data)
 
-    # 2️⃣ Gera o pagamento (SEM travar o bot)
-    result = await loop.run_in_executor(
-        None,
-        lambda: mp.payment().create(data)
-    )
+    response = result.get("response", {})
+    pix = response.get("point_of_interaction", {}).get("transaction_data", {})
 
-    response = result.get("response")
-    if not response or "id" not in response:
-        logger.error(f"MercadoPago falhou: {result}")
+    if not pix.get("qr_code"):
         await msg.reply_text("❌ Erro ao gerar o PIX. Tente novamente.")
         return
+
 
     payment_id = response["id"]
 
@@ -309,10 +266,6 @@ async def process_payment(update, context, plan_key):
         parse_mode="Markdown",
         reply_markup=keyboard
     )
-
-    # 4️⃣ Envia o vídeo DEPOIS do PIX
-    await asyncio.sleep(0.5)
-    await msg.reply_video(PRE_PAYMENT_VIDEO_URL)
 
     # 4️⃣ Envia QR Code (se existir)
     if qr_b64:
