@@ -7,6 +7,7 @@ import random
 import base64
 import io
 
+from telegram import InputMediaVideo
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -203,7 +204,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     uid = update.effective_user.id
 
-    # cancela abandono anterior
     task = abandoned_tasks.pop(uid, None)
     if task:
         task.cancel()
@@ -215,10 +215,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [PREVIEW_BUTTON],
     ])
 
-    # 🔒 START VISUAL (protegido)
+    # 🔒 START VISUAL
     try:
-        await update.message.reply_video(video=START_VIDEO_URL_1)
-        await update.message.reply_video(video=START_VIDEO_URL_2)
+        media = [
+            InputMediaVideo(media=START_VIDEO_URL_1),
+            InputMediaVideo(media=START_VIDEO_URL_2),
+        ]
+
+        await context.bot.send_media_group(
+            chat_id=update.effective_chat.id,
+            media=media
+        )
+
     except Exception as e:
         logger.error(f"Erro ao enviar vídeos do start: {e}")
 
@@ -234,7 +242,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         counter_task(context, counter_msg.chat_id, counter_msg.message_id)
     )
 
-    # ⏰ SÓ AGORA agenda abandono
     abandoned_tasks[uid] = asyncio.create_task(
         abandoned_flow(context, update.effective_chat.id)
     )
@@ -342,6 +349,31 @@ async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYP
     else:
         await update.callback_query.message.reply_text("⏳ Pagamento ainda em processamento...")
 
+
+async def send_vip_offer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    msg = q.message
+
+    text = (
+        "🍀 *HOJE É O SEU DIA DE SORTE!*\n\n"
+        "⚠️ Essa oferta NÃO aparece para todo mundo.\n\n"
+        "Por algum motivo, *você foi selecionado agora* para receber o acesso\n"
+        "🔥 *VIP VITALÍCIO* 🔥 com *DESCONTO EXCLUSIVO*.\n\n"
+        "💎 De ~R$16,00~\n"
+        "👉 *APENAS R$12,50* (pagamento único, acesso pra sempre)\n\n"
+        "⏰ *ATENÇÃO:*\n"
+        "Essa oferta expira em *5 minutos* e *nunca mais aparece* depois disso.\n\n"
+        "Depois que o tempo acabar:\n"
+        "❌ o valor volta ao normal\n"
+        "❌ o desconto desaparece\n\n"
+        "👇 Clique agora antes que seja tarde:"
+    )
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔥 Quero o VIP Vitalício por R$12,50", callback_data="buy_vitalicio_promo")]
+    ])
+
+    await msg.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
 # ================= BUTTON =================
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
@@ -362,7 +394,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif q.data == "preview":
         await send_previews(update, context)
+   
+    elif q.data == "restart":
+        await send_vip_offer(update, context)
 
+    elif q.data == "buy_vitalicio_promo":
+        await process_payment(update, context, "vitalicio")
 # ================= PROMO =================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
