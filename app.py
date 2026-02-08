@@ -94,6 +94,11 @@ PLANS = {
     "vitalicio": {"label": "🔥 Vitalício — R$16", "amount": 16.00},
 }
 
+PLANS["vitalicio_promo"] = {
+    "label": "🔥 Vitalício Promo — R$12,50",
+    "amount": 12.50
+}
+
 PROMO_CODES = {"THG100", "KLM100"}
 
 awaiting_promo = {}
@@ -259,15 +264,23 @@ async def process_payment(update, context, plan_key):
         [InlineKeyboardButton("🔄 Já paguei", callback_data="check_payment")]
     ])
 
+    await msg.edit_reply_markup(reply_markup=None)
+
+    # 1️⃣ Envia o QR Code (imagem) SEM botão
+    if qr_b64:
+        img = io.BytesIO(base64.b64decode(qr_b64))
+        img.name = "pix.png"  # importante
+        await msg.reply_photo(photo=img)
+
+    # 2️⃣ Envia o texto + botão em OUTRA mensagem
     await msg.reply_text(
-        f"💰 *{plan['label']}*\n\n🪙 *PIX Copia e Cola:*\n`{qr}`",
-        parse_mode="Markdown",
+        f"💰 {plan['label']}\n\n"
+        f"🪙 PIX Copia e Cola:\n"
+        f"{qr}\n\n"
+        "✅ Após realizar o pagamento, clique no botão abaixo 👇",
         reply_markup=keyboard
     )
 
-    if qr_b64:
-        img = io.BytesIO(base64.b64decode(qr_b64))
-        await msg.reply_photo(img)
 
 # ================= CHECK PAGAMENTO =================
 async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -349,7 +362,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_vip_offer(update, context)
 
     elif q.data == "buy_vitalicio_promo":
-        await process_payment(update, context, "vitalicio")
+        await process_payment(update, context, "vitalicio_promo")
+
 # ================= PROMO =================
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
