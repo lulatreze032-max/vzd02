@@ -6,6 +6,7 @@ import asyncio
 import random
 import base64
 import io
+import html
 
 from telegram import InputMediaVideo
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -273,15 +274,16 @@ async def process_payment(update, context, plan_key):
         await msg.reply_photo(photo=img)
 
     # 2️⃣ Envia o texto + botão em OUTRA mensagem
+    safe_qr = html.escape(qr)
+
     await msg.reply_text(
         f"💰 {plan['label']}\n\n"
         f"🪙 PIX Copia e Cola:\n"
-        f"<code>{qr}</code>\n\n"
+        f"<code>{safe_qr}</code>\n\n"
         "✅ Após realizar o pagamento, clique no botão abaixo 👇",
         parse_mode="HTML",
         reply_markup=keyboard
     )
-
 
 # ================= CHECK PAGAMENTO =================
 async def check_payment_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
