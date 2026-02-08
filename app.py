@@ -388,6 +388,9 @@ async def mp_webhook(request: Request):
 
 # ================= MAIN =================
 def main():
+        # ✅ cria o banco e a tabela antes de tudo
+    init_db()
+
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
