@@ -273,9 +273,18 @@ async def process_payment(update, context, plan_key):
         "payer": {"email": f"user{user_id}@mail.com"},
     }
 
-    result = mp.payment().create(data)
-    response = result.get("response", {})
-    payment_id = response.get("id")
+    loop = asyncio.get_running_loop()
+
+result = await loop.run_in_executor(
+    None,
+    lambda: mp.payment().create(data)
+)
+
+response = result.get("response")
+if not response or "id" not in response:
+    logger.error(f"MercadoPago falhou: {result}")
+    await msg.reply_text("❌ Erro ao gerar o PIX. Tente novamente.")
+    return
 
     qr = response.get("point_of_interaction", {}).get("transaction_data", {}).get("qr_code")
     qr_b64 = response.get("point_of_interaction", {}).get("transaction_data", {}).get("qr_code_base64")
