@@ -270,10 +270,6 @@ async def process_payment(update, context, plan_key):
     user_id = update.effective_user.id
     msg = update.callback_query.message
 
-    # 1️⃣ Vídeo antes do pagamento
-    await msg.reply_video(PRE_PAYMENT_VIDEO_URL)
-    await asyncio.sleep(1)
-
     data = {
         "transaction_amount": plan["amount"],
         "description": f"{plan_key.upper()} user:{user_id}",
@@ -313,6 +309,10 @@ async def process_payment(update, context, plan_key):
         parse_mode="Markdown",
         reply_markup=keyboard
     )
+
+    # 4️⃣ Envia o vídeo DEPOIS do PIX
+    await asyncio.sleep(0.5)
+    await msg.reply_video(PRE_PAYMENT_VIDEO_URL)
 
     # 4️⃣ Envia QR Code (se existir)
     if qr_b64:
