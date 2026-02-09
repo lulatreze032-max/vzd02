@@ -27,7 +27,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN")
 GROUP_CHAT_ID = int(os.getenv("GROUP_CHAT_ID") or 0)
 
-START_VIDEO_URL = "https://files.catbox.moe/4abfa3.mp4"
+START_VIDEO_URL = "https://files.catbox.moe/fr10m2.mp4"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
