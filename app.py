@@ -32,7 +32,6 @@ MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN")
 GROUP_CHAT_ID = int(os.getenv("GROUP_CHAT_ID") or 0)
 
 START_VIDEO_URL_1 = "https://files.catbox.moe/4abfa3.mp4"
-START_VIDEO_URL_2 = "https://files.catbox.moe/yu3i0y.mp4"
 
 PRE_PAYMENT_VIDEO_URL = "https://files.catbox.moe/p3tfer.mp4"
 ABANDON_VIDEO_URL = "https://files.catbox.moe/hotdya.mp4"
@@ -85,10 +84,6 @@ MAIN_TEXT = """
 
 🔞 Escolha seu plano especial abaixo: 👇
 """
-
-START_COUNTER = 135920
-STOP_COUNTER = 137500
-counter_value = START_COUNTER
 
 PLANS = {
     "mensal": {"label": "💳 Mensal — R$13", "amount": 13.00},
@@ -166,8 +161,12 @@ async def abandoned_flow(context, chat_id):
 
 # ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global counter_value
-    counter_value = START_COUNTER
+    uid = update.effective_user.id
+
+    # cancela abandono anterior
+    task = abandoned_tasks.pop(uid, None)
+    if task:
+        task.cancel()
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(PLANS["mensal"]["label"], callback_data="buy_mensal")],
@@ -176,37 +175,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [PREVIEW_BUTTON],
     ])
 
-    await update.message.reply_video(video=START_VIDEO_URL)
+    try:
+        await context.bot.send_video(
+            chat_id=update.effective_chat.id,
+            video=START_VIDEO_URL_1,  # ou file_id
+            caption=MAIN_TEXT,
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
 
-    await update.message.reply_text(
-        MAIN_TEXT,
-        reply_markup=InlineKeyboardMarkup(keyboard)
+    except Exception:
+        logger.exception("Erro ao enviar vídeo do start")
+
+    # fluxo de abandono (continua funcionando)
+    abandoned_tasks[uid] = asyncio.create_task(
+        abandoned_flow(context, update.effective_chat.id)
     )
-
-    counter_msg = await update.message.reply_text(
-        f"🔥🔞 *Membros Atuais 👥⬆:* {counter_value:,}".replace(",", "."),
-        parse_mode="Markdown"
-    )
-
-    asyncio.create_task(counter_task(context, counter_msg.chat_id, counter_msg.message_id))
 
 # ================= CONTADOR =================
-async def counter_task(context, chat_id, message_id):
-    global counter_value
-    while counter_value < STOP_COUNTER:
-        await asyncio.sleep(1.8)
-        counter_value += random.randint(1, 3)
-        if counter_value > STOP_COUNTER:
-            counter_value = STOP_COUNTER
-        try:
-            await context.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=message_id,
-                text=f"🔥🔞 *Membros Atuais 👥⬆:* {counter_value:,}".replace(",", "."),
-                parse_mode="Markdown"
-            )
-        except:
-            break
 
 # ================= PAGAMENTO =================
 async def process_payment(update, context, plan_key):
