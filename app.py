@@ -18,6 +18,8 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 import mercadopago
+from fastapi import FastAPI, Request
+import uvicorn
 
 # ================= CONFIG =================
 load_dotenv()
@@ -25,7 +27,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN")
 GROUP_CHAT_ID = int(os.getenv("GROUP_CHAT_ID") or 0)
 
-START_VIDEO_URL = "https://files.catbox.moe/fr10m2.mp"
+START_VIDEO_URL = "https://files.catbox.moe/fr10m2.mp4"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -261,17 +263,28 @@ async def handle_message(update: Update, context):
     else:
         await update.message.reply_text("❌ Código inválido.")
 
+# ================= FASTAPI =================
+app = FastAPI()
+
+@app.post("/webhook/mp")
+async def mp_webhook(request: Request):
+    return {"status": "disabled"}
+
 # ================= MAIN =================
 def main():
-    global bot_app  # 👈 ESSENCIAL
     init_db()
 
+    global bot_app
     bot_app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     bot_app.add_handler(CommandHandler("start", start))
     bot_app.add_handler(CallbackQueryHandler(button))
-    bot_app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
-    )
+    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    bot_app.run_polling()
+    loop = asyncio.get_event_loop()
+    loop.create_task(bot_app.run_polling())
+
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
+if __name__ == "__main__":
+    main()
