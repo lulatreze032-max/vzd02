@@ -183,19 +183,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ])
 
     # 🔒 START VISUAL
+    # 🔒 START VISUAL (envio seguro)
     try:
-        media = [
-            InputMediaVideo(media=START_VIDEO_URL_1),
-            InputMediaVideo(media=START_VIDEO_URL_2),
-        ]
-
-        await context.bot.send_media_group(
+        await context.bot.send_video(
             chat_id=update.effective_chat.id,
-            media=media
+            video=START_VIDEO_URL_1
         )
 
-    except Exception as e:
-        logger.error(f"Erro ao enviar vídeos do start: {e}")
+        await asyncio.sleep(0.5)
+
+        await context.bot.send_video(
+            chat_id=update.effective_chat.id,
+            video=START_VIDEO_URL_2
+        )
+
+    except Exception:
+        logger.exception("Erro ao enviar vídeos do start")
 
     # texto SEMPRE aparece
     await update.message.reply_text(MAIN_TEXT, reply_markup=keyboard)
