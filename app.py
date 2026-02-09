@@ -166,12 +166,8 @@ async def abandoned_flow(context, chat_id):
 
 # ================= START =================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-
-    # cancela fluxo anterior
-    task = abandoned_tasks.pop(uid, None)
-    if task:
-        task.cancel()
+    global counter_value
+    counter_value = START_COUNTER
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(PLANS["mensal"]["label"], callback_data="buy_mensal")],
@@ -180,18 +176,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [PREVIEW_BUTTON],
     ])
 
-    await context.bot.send_video(
-        chat_id=update.effective_chat.id,
-        video=START_VIDEO_URL_1,   # ou file_id
-        caption=MAIN_TEXT,
-        parse_mode="Markdown",
-        reply_markup=keyboard
+    await update.message.reply_video(video=START_VIDEO_URL)
+
+    await update.message.reply_text(
+        MAIN_TEXT,
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-    # abandono começa só depois
-    abandoned_tasks[uid] = asyncio.create_task(
-        abandoned_flow(context, update.effective_chat.id)
+    counter_msg = await update.message.reply_text(
+        f"🔥🔞 *Membros Atuais 👥⬆:* {counter_value:,}".replace(",", "."),
+        parse_mode="Markdown"
     )
+
+    asyncio.create_task(counter_task(context, counter_msg.chat_id, counter_msg.message_id))
 
 # ================= CONTADOR =================
 async def counter_task(context, chat_id, message_id):
