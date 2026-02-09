@@ -193,8 +193,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Erro ao enviar vídeos do start: {e}")
 
     # texto SEMPRE aparece
-     await update.message.reply_video(video=START_VIDEO_URL)
-     await update.message.reply_text(MAIN_TEXT, reply_markup=keyboard)
+    await update.message.reply_video(video=START_VIDEO_URL)
+    
+    await update.message.reply_text(MAIN_TEXT, reply_markup=keyboard)
 
     counter_msg = await update.message.reply_text(
         f"🔥🔞 *Membros Atuais 👥⬆:* {counter_value:,}".replace(",", "."),
