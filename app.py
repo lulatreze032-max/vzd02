@@ -32,7 +32,6 @@ MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN")
 GROUP_CHAT_ID = int(os.getenv("GROUP_CHAT_ID") or 0)
 
 START_VIDEO_URL_1 = "https://files.catbox.moe/4abfa3.mp4"
-START_VIDEO_URL_2 = "https://files.catbox.moe/yu3i0y.mp4"
 
 PRE_PAYMENT_VIDEO_URL = "https://files.catbox.moe/p3tfer.mp4"
 ABANDON_VIDEO_URL = "https://files.catbox.moe/hotdya.mp4"
@@ -184,10 +183,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 🔒 START VISUAL
     try:
-        media = [
-            InputMediaVideo(media=START_VIDEO_URL_1),
-            InputMediaVideo(media=START_VIDEO_URL_2),
-        ]
+        await update.message.reply_video(video=START_VIDEO_URL_1)
 
         await context.bot.send_media_group(
             chat_id=update.effective_chat.id,
