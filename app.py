@@ -18,8 +18,6 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 import mercadopago
-from fastapi import FastAPI, Request
-import uvicorn
 
 # ================= CONFIG =================
 load_dotenv()
@@ -262,13 +260,6 @@ async def handle_message(update: Update, context):
         await update.message.reply_text(invite.invite_link)
     else:
         await update.message.reply_text("❌ Código inválido.")
-
-# ================= FASTAPI =================
-app = FastAPI()
-
-@app.post("/webhook/mp")
-async def mp_webhook(request: Request):
-    return {"status": "disabled"}
 
 # ================= MAIN =================
 def main():
