@@ -263,16 +263,15 @@ async def handle_message(update: Update, context):
 
 # ================= MAIN =================
 def main():
+    global bot_app  # 👈 ESSENCIAL
     init_db()
 
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    bot_app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot_app.add_handler(CommandHandler("start", start))
+    bot_app.add_handler(CallbackQueryHandler(button))
+    bot_app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
 
-    # 🚨 NÃO use asyncio aqui
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    bot_app.run_polling()
